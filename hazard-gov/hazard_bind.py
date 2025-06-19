@@ -30,23 +30,20 @@ import subprocess
 import idna
 import xmltodict
 import time
-from pathlib import Path
 import requests
+from pathlib import Path
 
 
 #################################################################
+
 URL_REGISTER: str = "https://hazard.mf.gov.pl/api/Register"
 SINK_IP: str = "145.237.235.240"
-ZONE_PATH: Path = Path("/etc/bind/db.hazard-rpz")
+ZONE_PATH: str = "/etc/bind/db.hazard-rpz"
 RNDC_CMD: list[str] = ["rndc", "reload", "hazard-rpz"]
 TTL: int = 300
-LOGLEVEL: int = logging.DEBUG
+LOG_FILE: str = "hazard-bind.log"
+LOGLEVEL: int = logging.INFO
 
-logging.basicConfig(
-    level=LOGLEVEL,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 #################################################################
 
 
@@ -178,7 +175,7 @@ def main() -> int:
         domains_list: list[dict[str, str]] = fetch_xml(URL_REGISTER)
         domains: set[str] = make_domain_set(domains_list)
         zone_txt: str = render_zone_file(domains, SINK_IP, TTL)
-        if write_if_changed(ZONE_PATH, zone_txt):
+        if write_if_changed(Path(ZONE_PATH), zone_txt):
             subprocess.run(RNDC_CMD, check=True)
         return 0
     except Exception as e:
@@ -187,4 +184,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        filename=Path(LOG_FILE),
+        level=LOGLEVEL,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     sys.exit(main())
