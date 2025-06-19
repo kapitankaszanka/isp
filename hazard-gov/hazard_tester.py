@@ -25,6 +25,7 @@ async def get_domains() -> set[str]:
             ]["PozycjaRejestru"]
     except requests.exceptions.RequestException as e:
         print(f"Request error: {e}")
+        sys.exit(1)
     out: set[str] = set()
     for entry in xml:
         raw: str = entry["AdresDomeny"].lower()
@@ -41,7 +42,6 @@ async def ask(resolver: dns.asyncresolver.Resolver, domain: str):
         ans: dns.resolver.Answer = await resolver.resolve(
             domain, "A", lifetime=TIMEOUT, tcp=False
         )
-        print(type(ans))
         return domain, [r.address for r in ans] == [SINK_IP]
     except Exception:
         return domain, False
@@ -53,8 +53,6 @@ async def main():
         configure=False
     )
     res.nameservers = [DNS_SERVER]
-
-    print(type(res.nameservers))
 
     sem: asyncio.Semaphore = asyncio.Semaphore(CONC)
 
