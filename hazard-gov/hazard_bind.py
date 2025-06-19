@@ -162,6 +162,8 @@ def main() -> int:
     :return: succes or not
     :rtype: int
     """
+
+    logging.info("Executing script.")
     try:
         domains_list: list[dict[str, str]] = fetch_xml(URL_REGISTER)
         domains: set[str] = make_domain_set(domains_list)
