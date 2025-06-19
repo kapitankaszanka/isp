@@ -127,8 +127,9 @@ def render_zone_file(domains: set[str], sink_ip: str, zone_ttl: int) -> str:
 sink IN A {sink_ip}
 
 """
-    body: str = "\n".join(
-        f"{d} IN A {sink_ip}" for d in sorted(domains) if "_" not in d
+    body = "\n".join(
+        f"{d} IN CNAME sink" if "_" in d else f"{d} IN A {SINK_IP}"
+        for d in sorted(domains)
     )
     return head + body + "\n"
 
