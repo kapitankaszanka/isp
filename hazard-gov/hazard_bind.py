@@ -41,7 +41,6 @@ SINK_IP: str = "145.237.235.240"
 ZONE_PATH: str = "/etc/bind/db.hazard-rpz"
 RNDC_CMD: list[str] = ["rndc", "reload", "hazard-rpz"]
 TTL: int = 300
-LOG_FILE: str = "hazard_bind.log"
 LOGLEVEL: int = logging.INFO
 
 #################################################################
@@ -178,7 +177,6 @@ def main() -> int:
 
 if __name__ == "__main__":
     logging.basicConfig(
-        filename=Path(LOG_FILE),
         level=LOGLEVEL,
         format="%(asctime)s [%(levelname)s] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
