@@ -41,7 +41,7 @@ SINK_IP: str = "145.237.235.240"
 ZONE_PATH: str = "/etc/bind/db.hazard-rpz"
 RNDC_CMD: list[str] = ["rndc", "reload", "hazard-rpz"]
 TTL: int = 300
-LOG_FILE: str = "hazard-bind.log"
+LOG_FILE: str = "hazard_bind.log"
 LOGLEVEL: int = logging.INFO
 
 #################################################################
@@ -74,14 +74,8 @@ def fetch_xml(
                 return parsed["Rejestr"]["PozycjaRejestru"]
             except Exception as e:
                 logging.error(f"Error occure when parsing XML file: {e}")
-        except requests.exceptions.HTTPError as e:
-            logging.error(f"Connection error ocure: {e}")
-        except requests.exceptions.SSLError as e:
-            logging.error(f"SSL Error: {e}")
-        except requests.exceptions.ConnectionError as e:
-            logging.error(f"Connection error ocure: {e}")
         except requests.exceptions.RequestException as e:
-            logging.error(f"Error: {e}")
+            logging.error(f"Request error: {e}")
     sys.exit(1)
 
 
@@ -159,9 +153,7 @@ def write_if_changed(path: Path, content: str) -> bool:
     )
     if changed:
         path.write_text(content)
-        logging.info(
-            "Plik %s zaktualizowany (%dkB)", path, len(content) // 1024
-        )
+        logging.info("File %s was updated (%dkB)", path, len(content) // 1024)
     return changed
 
 
@@ -177,9 +169,10 @@ def main() -> int:
         zone_txt: str = render_zone_file(domains, SINK_IP, TTL)
         if write_if_changed(Path(ZONE_PATH), zone_txt):
             subprocess.run(RNDC_CMD, check=True)
+            logging.info(f"The launch of the script was successful")
         return 0
     except Exception as e:
-        logging.fatal(f"Fatal error ocure: {e}")
+        logging.critical(f"Fatal error ocure: {e}")
         return 1
 
 
