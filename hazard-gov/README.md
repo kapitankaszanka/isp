@@ -1,6 +1,6 @@
 # BIND updater for the Polish gambling blacklist
 
-`hazard_bind.py` downloads the XML blacklist published by Poland’s Ministry of Finance (“Rejestr Stron Hazardowych”), parses it and builds a **Response-Policy Zone** named **hazard-rpz**.  
+`hazard_updater.py` downloads the XML blacklist published by Poland’s Ministry of Finance (“Rejestr Stron Hazardowych”), parses it and builds a **Response-Policy Zone** named **hazard-rpz**.  
 Every domain in that list is redirected to **145 .237 .235 .240**.
 
 ---
@@ -45,7 +45,7 @@ sudo rndc reconfig
 
 Manual check
 ```bash
-sudo /opt/isp/hazard-gov/.venv/bin/python3 /opt/isp/hazard-gov/hazard_bind.py
+sudo /opt/isp/hazard-gov/.venv/bin/python3 /opt/isp/hazard-gov/hazard_updater.py
 rndc zonestatus hazard-rpz     # should report “loaded serial …”
 ```
 
@@ -63,7 +63,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/opt/isp/hazard-gov/.venv/bin/python3 /opt/isp/hazard-gov/hazard_bind.py
+ExecStart=/opt/isp/hazard-gov/.venv/bin/python3 /opt/isp/hazard-gov/hazard_updater.py
 
 [Install]
 WantedBy=multi-user.target
