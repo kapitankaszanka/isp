@@ -10,8 +10,8 @@ Every domain in that list is redirected to **145 .237 .235 .240**.
 ### 1. Install the script
 
 ```bash
-git colone https://github.com/kapitankaszanka/isp.git
-cd isp/hazard-gov.
+git clone https://github.com/kapitankaszanka/isp.git
+cd isp/hazard-gov
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -20,26 +20,20 @@ deactivate
 
 ### 2. Install the script
 Add RPZ configuration to BIND
-Create hazard zone configuration file.
+Add response policy to configuration options.
 ```bash
-touch /etc/bind/hazard-rpz.conf
+response-policy {
+        zone "hazard-rpz";
+} break-dnssec yes;
 ```
-Add configuration to file.
+Add hazard zone to configuration file configuration file.
+
 ```bash
 zone "hazard-rpz" {
         type master;
         file "/etc/bind/db.hazard-rpz";
         check-names ignore;         // accepts labels with “_”
 };
-
-response-policy {
-        zone "hazard-rpz";
-} break-dnssec yes;
-```
-
-and include it from your main config, e.g.:
-```bash
-include "/etc/bind/hazard-rpz.conf";
 ```
 
 Reload BIND so it sees the new include:
@@ -87,12 +81,11 @@ Persistent=true
 
 [Install]
 WantedBy=timers.target
-
 ```
 Reload systemd
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now hazard-rpz.timer
 ```
-The timer now updates the blacklist every hour; any change automatically triggers
+The timer now updates the blacklist every 15min; any change automatically triggers
 rndc reload hazard-rpz.
