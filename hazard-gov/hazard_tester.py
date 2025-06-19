@@ -16,11 +16,15 @@ TIMEOUT: float | int = 5.0
 
 
 async def get_domains() -> set[str]:
-    with requests.Session() as s:
-        response: requests.Response = s.get(URL, timeout=(5, 60))
-        xml: list[dict[str, str]] = xmltodict.parse(response.text)["Rejestr"][
-            "PozycjaRejestru"
-        ]
+    try:
+        with requests.Session() as s:
+            response: requests.Response = s.get(URL, timeout=(5, 60))
+            response.raise_for_status()
+            xml: list[dict[str, str]] = xmltodict.parse(response.text)[
+                "Rejestr"
+            ]["PozycjaRejestru"]
+    except requests.exceptions.RequestException as e:
+        print(f"Request error: {e}")
     out: set[str] = set()
     for entry in xml:
         raw: str = entry["AdresDomeny"].lower()
