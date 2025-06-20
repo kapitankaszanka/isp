@@ -81,6 +81,7 @@ def fetch_xml(
 def make_domain_set(domain_list: list[dict[str, str]]) -> set[str]:
     """
     The function pulls out all domains from the parsd dictionary.
+    
     :params list[dict[str,str]] domain_list: parsed dictionary
     :return: all domains
     :rtype: Set[str]
@@ -160,6 +161,7 @@ def write_if_changed(path: Path, content: str) -> bool:
 def main() -> int:
     """
     Run the script.
+    
     :return: succes or not
     :rtype: int
     """
