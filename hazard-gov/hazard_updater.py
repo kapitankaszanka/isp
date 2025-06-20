@@ -182,6 +182,6 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=LOGLEVEL,
         format="%(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        datefmt="%Y-%m-%d %H:%M:%S %z",
     )
     sys.exit(main())
