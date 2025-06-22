@@ -80,7 +80,7 @@ OnCalendar=*:2/15
 RandomizedDelaySec=30s
 Unit=hazard-rpz.service
 AccuracySec=5min
-Persistent=true
+Persistent=false
 
 [Install]
 WantedBy=timers.target
@@ -177,7 +177,7 @@ OnCalendar=*:2/15
 RandomizedDelaySec=30s
 Unit=hazard-rpz.service
 AccuracySec=5min
-Persistent=true
+Persistent=false
 
 [Install]
 WantedBy=timers.target
