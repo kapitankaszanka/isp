@@ -76,7 +76,6 @@ And timer configuration
 Description=Run hazard_rpz every 15 minutes
 
 [Timer]
-OnBootSec=10min
 OnCalendar=*:2/15
 RandomizedDelaySec=30s
 Unit=hazard-rpz.service
@@ -174,7 +173,6 @@ Konfiguracja timera, uruchamia skrypt co 15min.
 Description=Run hazard_rpz every 15 minutes
 
 [Timer]
-OnBootSec=10min
 OnCalendar=*:2/15
 RandomizedDelaySec=30s
 Unit=hazard-rpz.service
