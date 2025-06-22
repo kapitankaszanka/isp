@@ -118,12 +118,12 @@ def render_zone_file(domains: set[str], sink_ip: str, zone_ttl: int) -> str:
     serial: int = int(time.time())
     head: str = f"""$TTL {zone_ttl}
 @ SOA localhost. root.localhost. ( 
- \t\t{serial}
- \t\t3600
- \t\t600
- \t\t30D
- \t\t3600
- \t\t) 
+                {serial}
+                3600
+                600                
+                30D                
+                3600
+                ) 
 @ IN NS localhost.
 sink IN A {sink_ip}
 
