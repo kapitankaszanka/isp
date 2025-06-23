@@ -39,7 +39,7 @@ from dns.rdtypes.IN.A import A
 URL: str = "https://hazard.mf.gov.pl/api/Register"
 DNS_SERVER: str = "127.0.0.1"
 SINK_IP: str = "145.237.235.240"
-CONC: int = 50  # connections number
+CONC: int = 254  # connections number
 TIMEOUT: float | int = 5.0  # dns timeout
 
 #################################################################
