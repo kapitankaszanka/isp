@@ -33,6 +33,8 @@ import time
 import requests
 from pathlib import Path
 
+from typing import Any
+
 
 #################################################################
 
@@ -69,7 +71,7 @@ def fetch_xml(
             _response.raise_for_status()
             try:
                 logging.debug("Parsing downloaded domain list.")
-                parsed: dict[str, str] = xmltodict.parse(_response.content)
+                parsed: Any = xmltodict.parse(_response.content)
                 return parsed["Rejestr"]["PozycjaRejestru"]
             except Exception as e:
                 logging.error(f"Error occure when parsing XML file: {e}")
