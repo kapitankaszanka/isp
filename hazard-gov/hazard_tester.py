@@ -117,12 +117,10 @@ async def main() -> None:
             return await ask(res, domain)
 
     tasks = [asyncio.create_task(worker(d)) for d in domains]
-    print(type(tasks))
 
     bad = []
     t0 = time.time()
     for fut in asyncio.as_completed(tasks):
-        print(type(fut))
         name, ok = await fut
         if not ok:
             bad.append(name)
