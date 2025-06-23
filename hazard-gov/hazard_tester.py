@@ -74,7 +74,18 @@ async def get_domains() -> set[str]:
     return out
 
 
-async def ask(resolver: dns.asyncresolver.Resolver, domain: str):
+async def ask(
+    resolver: dns.asyncresolver.Resolver, domain: str
+) -> tuple[str, bool]:
+    """
+    The function try resolve fqdn.
+
+    :param resolver: object resolver.
+    :param str domain: fqdn to resolve.
+    :return: FQDN and the value of bool or a returned IP address is correct.
+    :rtype: tuple[str, bool]
+    """
+
     try:
         ans: dns.resolver.Answer = await resolver.resolve(
             domain, "A", lifetime=TIMEOUT, tcp=False
@@ -87,7 +98,11 @@ async def ask(resolver: dns.asyncresolver.Resolver, domain: str):
 async def main() -> None:
     """
     The main function that runs the script.
+
+    :return: None
+    :rtype: None
     """
+
     domains: set[str] = await get_domains()
     res: dns.asyncresolver.Resolver = dns.asyncresolver.Resolver(
         configure=False
@@ -97,6 +112,7 @@ async def main() -> None:
     sem: asyncio.Semaphore = asyncio.Semaphore(CONC)
 
     async def worker(domain):
+        """The function for limit connections."""
         async with sem:
             return await ask(res, domain)
 
