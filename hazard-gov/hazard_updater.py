@@ -83,7 +83,7 @@ def fetch_xml(
 def make_domain_set(domain_list: list[dict[str, str]]) -> set[str]:
     """
     The function pulls out all domains from the parsd dictionary.
-    
+
     :params list[dict[str,str]] domain_list: parsed dictionary
     :return: all domains
     :rtype: Set[str]
@@ -122,10 +122,10 @@ def render_zone_file(domains: set[str], sink_ip: str, zone_ttl: int) -> str:
 @ SOA localhost. root.localhost. ( 
                 {serial}
                 3600
-                600                
-                30D                
+                600
+                30D
                 3600
-                ) 
+                )
 @ IN NS localhost.
 sink IN A {sink_ip}
 
@@ -163,7 +163,7 @@ def write_if_changed(path: Path, content: str) -> bool:
 def main() -> int:
     """
     Run the script.
-    
+
     :return: succes or not
     :rtype: int
     """
