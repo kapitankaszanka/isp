@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ---------------------------------------------------------------------------
-#  hazard_bind.py
+#  hazard_updater.py
 #
 #  Copyright (c) 2025 Mateusz Krupczyński
 #
