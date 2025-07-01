@@ -41,7 +41,7 @@ from typing import Any
 URL_REGISTER: str = "https://hazard.mf.gov.pl/api/Register"
 SINK_IP: str = "145.237.235.240"
 ZONE_PATH: str = "/etc/bind/db.hazard-rpz"
-RNDC_CMD: list[str] = ["rndc", "reload", "hazard-rpz"]
+RNDC_CMD: list[str] = ["rndc", "reload", "hazard-rpz", ">", r"/dev/null"]
 TTL: int = 300
 LOGLEVEL: int = logging.INFO
 
