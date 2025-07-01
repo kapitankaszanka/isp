@@ -41,7 +41,7 @@ from typing import Any
 URL_REGISTER: str = "https://hazard.mf.gov.pl/api/Register"
 SINK_IP: str = "145.237.235.240"
 ZONE_PATH: str = "/etc/bind/db.hazard-rpz"
-RNDC_CMD: list[str] = ["rndc", "reload", "hazard-rpz", ">", r"/dev/null"]
+RNDC_CMD: list[str] = ["rndc", "reload", "hazard-rpz"]
 TTL: int = 300
 LOGLEVEL: int = logging.INFO
 
@@ -174,7 +174,7 @@ def main() -> int:
         domains: set[str] = make_domain_set(domains_list)
         zone_txt: str = render_zone_file(domains, SINK_IP, TTL)
         if write_if_changed(Path(ZONE_PATH), zone_txt):
-            subprocess.run(RNDC_CMD, check=True)
+            subprocess.run(RNDC_CMD, check=True, stdout=subprocess.DEVNULL)
             logging.info(f"The launch of the script was successful")
         return 0
     except Exception as e:
