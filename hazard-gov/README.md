@@ -26,7 +26,7 @@ Add response policy to configuration options.
 ```bash
 response-policy {
         zone "hazard-rpz";
-} break-dnssec yes;
+} break-dnssec yes qname-wait-recurse no;
 ```
 Add hazard zone to configuration file configuration file.
 
@@ -122,7 +122,7 @@ Dodanie response policy do opcji serwera BIND.
 ```bash
 response-policy {
         zone "hazard-rpz";
-} break-dnssec yes;
+} break-dnssec yes qname-wait-recurse no;
 ```
 Dodanie strefy hazardowej do konfiguracji.
 
