@@ -137,6 +137,32 @@ sink IN A {sink_ip}
     return head + body + "\n"
 
 
+def compare_zones(path: Path, new_zone_obj: str) -> bool:
+    """
+    The function is responsible for checking whether there
+    has been a change of zone. SHA1 is calculated from the
+    'sink' entry to the end of the file.
+
+    :param Path path: path to file to compare.
+    :param new_zone_obj: the objec with wich the file will be compared.
+    :return: False if file don't need to be overwriten.
+             True if file need to be overwriten.
+    :rtype: bool
+    """
+
+    zone_file: str = path.read_text() if path.exists() else ""
+    try:
+        zone_data: str = zone_file.split("@ IN NS localhost.")[1]
+        new_zone_data: str = new_zone_obj.split("@ IN NS localhost.")[1]
+    except Exception as e:
+        logging.warning(f"Can't compare zones. {e}")
+        return True
+    result: bool = hashlib.sha1(zone_data.encode()) != hashlib.sha1(
+        new_zone_data.encode()
+    )
+    return result
+
+
 def write_if_changed(path: Path, content: str) -> bool:
     """
     The function checks whether in the given file,
@@ -148,15 +174,14 @@ def write_if_changed(path: Path, content: str) -> bool:
     :return: the file has been changed?
     :rtype: bool
     """
-    old: str = path.read_text() if path.exists() else ""
+
+    changed: bool = compare_zones(path, content)
     logging.debug("Comparing actual file with new created.")
-    changed: bool = (
-        hashlib.sha1(old.encode()).digest()
-        != hashlib.sha1(content.encode()).digest()
-    )
     if changed:
         path.write_text(content)
-        logging.info("File %s was updated (%dkB)", path, len(content) // 1024)
+        logging.info(f"File {path} was updated ({len(content) // 1024}kB).")
+    else:
+        logging.info("No changes to the file.")
     return changed
 
 
