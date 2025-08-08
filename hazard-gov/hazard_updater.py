@@ -157,8 +157,9 @@ def compare_zones(path: Path, new_zone_obj: str) -> bool:
     except Exception as e:
         logging.warning(f"Can't compare zones. {e}")
         return True
-    result: bool = hashlib.sha1(zone_data.encode()) != hashlib.sha1(
-        new_zone_data.encode()
+    result: bool = (
+        hashlib.sha1(zone_data.encode()).digest()
+        != hashlib.sha1(new_zone_data.encode()).digest()
     )
     return result
 
