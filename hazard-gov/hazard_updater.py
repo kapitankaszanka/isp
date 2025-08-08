@@ -181,9 +181,10 @@ def write_if_changed(path: Path, content: str) -> bool:
     if changed:
         path.write_text(content)
         logging.info(f"File {path} was updated ({len(content) // 1024}kB).")
+        return True
     else:
         logging.info("No changes to the file.")
-    return changed
+        return True
 
 
 def main() -> int:
