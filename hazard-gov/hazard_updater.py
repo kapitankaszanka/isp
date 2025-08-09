@@ -50,9 +50,9 @@ LOGLEVEL: int = logging.INFO
 
 def fetch_xml(
     url: str, timeout: float | int | tuple[int, int] = (5, 60)
-) -> list[dict[str, str]]:
+) -> list[dict[str, Any]]:
     """
-    The function download records and return dict.
+    The function download records and return parsed dict.
 
     :param str url: url from where xml will be downladed.
     :param timeout: timeout for GET Request, defualt 5, 60.
@@ -69,15 +69,15 @@ def fetch_xml(
                 url, timeout=timeout, headers=headers
             )
             _response.raise_for_status()
-            try:
-                logging.debug("Parsing downloaded domain list.")
-                parsed: Any = xmltodict.parse(_response.content)
-                return parsed["Rejestr"]["PozycjaRejestru"]
-            except Exception as e:
-                logging.error(f"Error occure when parsing XML file: {e}")
+            logging.debug("Parsing the downloaded domain list.")
+            parsed: Any = xmltodict.parse(_response.content)
+            return parsed["Rejestr"]["PozycjaRejestru"]
         except requests.exceptions.RequestException as e:
             logging.error(f"Request error: {e}")
-    sys.exit(1)
+            raise
+        except Exception as e:
+            logging.error(f"Error occurred when parsing XML file: {e}")
+            raise
 
 
 def make_domain_set(domain_list: list[dict[str, str]]) -> set[str]:
@@ -86,7 +86,7 @@ def make_domain_set(domain_list: list[dict[str, str]]) -> set[str]:
 
     :params list[dict[str,str]] domain_list: parsed dictionary
     :return: all domains
-    :rtype: Set[str]
+    :rtype: set[str]
     """
 
     out: set[str] = set()
@@ -107,6 +107,9 @@ def render_zone_file(domains: set[str], sink_ip: str, zone_ttl: int) -> str:
     """
     The function is responsible for creating string object with data
     that will be saved to zone file.
+    The created object is later used to verify whether the zone file
+    should be updated. In case of changes, you should also check whether
+    the change is also required in compare_zones() function.
 
     :param set[str] domains: set with all domains that will be addred to
                               zone file.
@@ -129,34 +132,37 @@ def render_zone_file(domains: set[str], sink_ip: str, zone_ttl: int) -> str:
 @ IN NS localhost.
 sink IN A {sink_ip}
 
+; --- BEGIN DATA ---
+
 """
-    body = "\n".join(
-        f"{d} IN CNAME sink" if "_" in d else f"{d} IN A {SINK_IP}"
-        for d in sorted(domains)
-    )
+    body = "\n".join(f"{d} IN CNAME sink" for d in sorted(domains))
     return head + body + "\n"
 
 
-def compare_zones(path: Path, new_zone_obj: str) -> bool:
+def compare_zones(zone_path: Path, new_zone_obj: str) -> bool:
     """
     The function is responsible for checking whether there
     has been a change of zone. SHA1 is calculated from the
     'sink' entry to the end of the file.
 
-    :param Path path: path to file to compare.
+    :param Path zone_path: path to file to compare.
     :param new_zone_obj: the objec with wich the file will be compared.
     :return: False if file don't need to be overwriten.
              True if file need to be overwriten.
     :rtype: bool
     """
 
-    zone_file: str = path.read_text() if path.exists() else ""
+    logging.debug(f"Loading current zone file.")
+    zone_file: str = zone_path.read_text() if zone_path.exists() else ""
+    split_string: str = "; --- BEGIN DATA ---"
     try:
-        zone_data: str = zone_file.split("@ IN NS localhost.")[1]
-        new_zone_data: str = new_zone_obj.split("@ IN NS localhost.")[1]
+        zone_data: str = zone_file.split(split_string)[1]
+        new_zone_data: str = new_zone_obj.split(split_string)[1]
     except Exception as e:
-        logging.warning(f"Can't compare zones. {e}")
+        logging.warning(f"Error ocurred when comparing files: {e}")
+        logging.warning("Can't compare zones. Zone file will be overwriten.")
         return True
+    logging.debug("Comparing zones.")
     result: bool = (
         hashlib.sha1(zone_data.encode()).digest()
         != hashlib.sha1(new_zone_data.encode()).digest()
@@ -164,44 +170,49 @@ def compare_zones(path: Path, new_zone_obj: str) -> bool:
     return result
 
 
-def write_if_changed(path: Path, content: str) -> bool:
+def write_if_changed(zone_path: Path, zone_content: str) -> bool:
     """
-    The function checks whether in the given file,
-    and there are some differences in the new creation.
-    If the differences occur, the file is overwritten.
+    The function checks whether there are changes in the file given.
+    If the changes occur, the file is overwritten.
 
-    :params Path path: path with the file to compare.
-    :params str content: new created file to compare.
+    :params Path zone_path: path with the file to compare.
+    :params str zone_content: new created file to compare.
     :return: the file has been changed?
     :rtype: bool
     """
 
-    changed: bool = compare_zones(path, content)
-    logging.debug("Comparing actual file with new created.")
+    logging.debug("Starting compare zones.")
+    changed: bool = compare_zones(zone_path, zone_content)
     if changed:
-        path.write_text(content)
-        logging.info(f"File {path} was updated ({len(content) // 1024}kB).")
+        logging.debug(f"Changes in zone detected. Overwriting zone file.")
+        zone_path.write_text(zone_content)
+        logging.info(
+            f"File {zone_path} was updated ({len(zone_content) // 1024}kB)."
+        )
         return True
     else:
         logging.info("No changes to the file.")
-        return True
+        return False
 
 
 def main() -> int:
     """
     Run the script.
 
-    :return: succes or not
+    :return: succes or not, exit code.
     :rtype: int
     """
 
     logging.info("Executing script.")
     try:
-        domains_list: list[dict[str, str]] = fetch_xml(URL_REGISTER)
+        domains_list: list[dict[str, Any]] = fetch_xml(URL_REGISTER)
         domains: set[str] = make_domain_set(domains_list)
         zone_txt: str = render_zone_file(domains, SINK_IP, TTL)
         if write_if_changed(Path(ZONE_PATH), zone_txt):
+            logging.debug(f"Reloading the zone file.")
             subprocess.run(RNDC_CMD, check=True, stdout=subprocess.DEVNULL)
+            logging.info(f"The launch of the script was successful")
+        else:
             logging.info(f"The launch of the script was successful")
         return 0
     except Exception as e:
