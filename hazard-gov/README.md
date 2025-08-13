@@ -66,6 +66,10 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/opt/isp/hazard-gov/.venv/bin/python3 /opt/isp/hazard-gov/hazard_updater.py
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=full
+ReadWritePaths=/etc/bind
 
 [Install]
 WantedBy=multi-user.target
@@ -73,11 +77,11 @@ WantedBy=multi-user.target
 And timer configuration
 ```ini
 [Unit]
-Description=Run hazard_rpz every 15 minutes
+Description=Runs hazard_rpz every 30 minutes, with a randomized delay of up to 15 minutes
 
 [Timer]
-OnCalendar=*:2/15
-RandomizedDelaySec=30s
+OnCalendar=*:0/30
+RandomizedDelaySec=15m
 Unit=hazard-rpz.service
 AccuracySec=5min
 Persistent=false
@@ -90,7 +94,7 @@ Reload systemd
 sudo systemctl daemon-reload
 sudo systemctl enable --now hazard-rpz.timer
 ```
-The timer now updates the blacklist every 15min; any change automatically triggers
+The timer now updates the blacklist every 30min; any change automatically triggers
 rndc reload hazard-rpz.
 
 
@@ -163,18 +167,22 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/opt/isp/hazard-gov/.venv/bin/python3 /opt/isp/hazard-gov/hazard_updater.py
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=full
+ReadWritePaths=/etc/bind
 
 [Install]
 WantedBy=multi-user.target
 ```
-Konfiguracja timera, uruchamia skrypt co 15min.
+Konfiguracja timera, uruchamia skrypt co 30min z losowym opóźnieniem do 15min.
 ```ini
 [Unit]
-Description=Run hazard_rpz every 15 minutes
+Description=Runs hazard_rpz every 30 minutes, with a randomized delay of up to 15 minutes
 
 [Timer]
-OnCalendar=*:2/15
-RandomizedDelaySec=30s
+OnCalendar=*:0/30
+RandomizedDelaySec=15m
 Unit=hazard-rpz.service
 AccuracySec=5min
 Persistent=false
@@ -187,4 +195,4 @@ Przeładowanie systemd.
 sudo systemctl daemon-reload
 sudo systemctl enable --now hazard-rpz.timer
 ```
-Skrypt będzie aktualizował w przypadku zmian, plik strefy co 15min, po czym przeładuje strefe hazardową. 
+Skrypt będzie aktualizował w przypadku zmian, plik strefy co 30min, po czym przeładuje strefe hazardową. 
