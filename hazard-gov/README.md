@@ -80,7 +80,7 @@ And timer configuration
 Description=Runs hazard_rpz every 30 minutes, with a randomized delay of up to 15 minutes
 
 [Timer]
-OnCalendar=*:0/30
+OnCalendar=*:15/30
 RandomizedDelaySec=15m
 Unit=hazard-rpz.service
 AccuracySec=5min
@@ -181,7 +181,7 @@ Konfiguracja timera, uruchamia skrypt co 30min z losowym opóźnieniem do 15min.
 Description=Runs hazard_rpz every 30 minutes, with a randomized delay of up to 15 minutes
 
 [Timer]
-OnCalendar=*:0/30
+OnCalendar=*:15/30
 RandomizedDelaySec=15m
 Unit=hazard-rpz.service
 AccuracySec=5min
