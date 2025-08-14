@@ -60,7 +60,7 @@ sudo touch /etc/systemd/system/hazard-rpz.timer
 ```ini
 [Unit]
 Description=Update the hazard RPZ zone
-After=network-online.target named.service
+Requires=network-online.target
 Wants=network-online.target
 
 [Service]
@@ -161,7 +161,7 @@ Serwis.
 ```ini
 [Unit]
 Description=Update the hazard RPZ zone
-After=network-online.target named.service
+Requires=network-online.target
 Wants=network-online.target
 
 [Service]
