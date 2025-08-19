@@ -43,26 +43,24 @@ DEFAULT_DNS_SERVER: str = "127.0.0.1"
 SINK_IP: str = "145.237.235.240"
 CONN: int = 128  # connections number
 DNS_TIMEOUT: float | int = 5.0  # dns timeout
+
 ARGUMENTS: dict[tuple[str, ...], dict[str, Any]] = {
-    # specify dns_server
     ("-d", "--dns-server"): {
         "dest": "dns_server",
         "default": DEFAULT_DNS_SERVER,
         "help": "Specify DNS server address (default 127.0.0.1).",
     },
-    # specify connections number
     ("-c", "--conn_number"): {
         "dest": "conn_number",
         "type": int,
         "default": CONN,
         "help": "Specify asynchronous connection number (default 128).",
     },
-    # format type
     ("-f", "--format"): {
         "dest": "format_type",
         "default": "text",
-        "help": "Specify in what format output should be printed.\n"
-        "Allowed formats: text(default), json",
+        "choices": ["text", "json"],
+        "help": "Output format: text (default) or json.",
     },
 }
 
@@ -102,13 +100,15 @@ async def ask(
     resolver: dns.asyncresolver.Resolver, domain: str
 ) -> tuple[str, bool, float]:
     """
-    The function try resolve fqdn.
+    Try resolve FQDN.
 
     :param resolver: object resolver.
     :param str domain: fqdn to resolve.
-    :return: FQDN and the value of bool or a returned IP address is correct.
-    :rtype: tuple[str, bool]
+    :return: (domain, ok, elapsed_seconds)
+             ok == True if the A-answer is exactly [SINK_IP]
+    :rtype: tuple[str, bool, float]
     """
+
     req_t0: float = time.perf_counter()
     try:
         ans: dns.resolver.Answer = await resolver.resolve(
@@ -122,7 +122,7 @@ async def ask(
         return domain, False, req_dt0
 
 
-async def main(args: tuple[Any, ...]) -> None:
+async def main(dns_server: str, conn_number: int, format_type: str) -> None:
     """
     The main function that runs the script.
 
@@ -130,7 +130,6 @@ async def main(args: tuple[Any, ...]) -> None:
     :return: None
     :rtype: None
     """
-    dns_server, conn_number, format_type = args
 
     domains: set[str] = await get_domains()
     res: dns.asyncresolver.Resolver = dns.asyncresolver.Resolver(
@@ -174,7 +173,10 @@ async def main(args: tuple[Any, ...]) -> None:
             "DNS": dns_server,
             "OK": len(domains) - len(bad),
             "BAD": len(bad),
-            "TIME": {"AVG_RES": f"{avg_ms:.1f}", "TOTAL": f"{dt_total:.1f}"},
+            "TIMES": {
+                "AVG_RES": round(avg_ms, 2),
+                "TOTAL": round(dt_total, 2),
+            },
             "ERRORS": bad,
         }
         print(json.dumps(output))
@@ -182,11 +184,12 @@ async def main(args: tuple[Any, ...]) -> None:
     sys.exit(1 if bad else 0)
 
 
-def get_parser() -> tuple[str | int, ...]:
+def get_parser() -> tuple[Any, ...]:
     """
     The function return parser object.
+
     :return: argmuent parser object.
-    :rtype: argparse.ArgumentParser
+    :rtype: tuple[Any, ...]
     """
 
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
@@ -201,5 +204,5 @@ def get_parser() -> tuple[str | int, ...]:
 
 
 if __name__ == "__main__":
-    args: tuple[Any, ...] = get_parser()
-    asyncio.run(main(*args))
+    dns_server, conn_number, format_type = get_parser()
+    asyncio.run(main(dns_server, conn_number, format_type))
