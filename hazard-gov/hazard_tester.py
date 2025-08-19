@@ -166,18 +166,18 @@ async def main(dns_server: str, conn_number: int, format_type: str) -> None:
             print("Errors:", *bad[:20], "...", file=sys.stderr)
         print(
             f"DNS={dns_server}  OK={len(domains)-len(bad)}  BAD={len(bad)}  "
-            f"TIME: AVG_RES={avg_ms:.1f}ms TOTAL={dt_total:.1f}s"
+            f"TIMERS: AVG_RES={avg_ms:.1f}ms TOTAL={dt_total:.1f}s"
         )
     if format_type == "json":
         output: dict[str, Any] = {
-            "DNS": dns_server,
-            "OK": len(domains) - len(bad),
-            "BAD": len(bad),
-            "TIMES": {
-                "AVG_RES": round(avg_ms, 2),
-                "TOTAL": round(dt_total, 2),
+            "dns": dns_server,
+            "ok": len(domains) - len(bad),
+            "bad": len(bad),
+            "timers": {
+                "avg_res": round(avg_ms, 2),
+                "total": round(dt_total, 2),
             },
-            "ERRORS": bad,
+            "errors": bad,
         }
         print(json.dumps(output))
 
