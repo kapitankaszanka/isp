@@ -55,7 +55,7 @@ ARGUMENTS: dict[tuple[str, ...], dict[str, Any]] = {
         "dest": "conn_number",
         "type": int,
         "default": CONN,
-        "help": "Specify asynchronous connection number (default 128).",
+        "help": "Specify asynchronous connection number (default 64).",
     },
     ("-f", "--format"): {
         "dest": "format_type",
