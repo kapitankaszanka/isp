@@ -177,8 +177,8 @@ async def main(
             "ok": len(domains) - len(bad),
             "bad": len(bad),
             "timers": {
-                "avg_res": round(avg_ms, 2),
-                "total": round(dt_total, 2),
+                "avg_res": f"{avg_ms:.1f}ms",
+                "total": f"{dt_total:.1f}s",
             },
             "errors": bad,
         }

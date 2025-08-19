@@ -1,5 +1,3 @@
-ENG
----
 # BIND updater for the Polish gambling blacklist
 
 `hazard_updater.py` downloads the XML blacklist published by Poland’s Ministry of Finance (“Rejestr Stron Hazardowych”), parses it and builds a **Response-Policy Zone** named **hazard-rpz**.  
