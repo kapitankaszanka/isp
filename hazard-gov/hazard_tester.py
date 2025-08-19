@@ -25,22 +25,46 @@
 
 import sys
 import time
+import json
 import asyncio
 import idna
 import xmltodict
 import requests
+import argparse
 import dns.resolver
 import dns.asyncresolver
-from typing import cast
+from typing import Any, cast
 from dns.rdtypes.IN.A import A
 
 #################################################################
 
 URL: str = "https://hazard.mf.gov.pl/api/Register"
-DNS_SERVER: str = "127.0.0.1"
+DEFAULT_DNS_SERVER: str = "127.0.0.1"
 SINK_IP: str = "145.237.235.240"
-CONC: int = 254  # connections number
-TIMEOUT: float | int = 5.0  # dns timeout
+CONN: int = 128  # connections number
+DNS_TIMEOUT: float | int = 5.0  # dns timeout
+ARGUMENTS: dict[tuple[str, ...], dict[str, Any]] = {
+    # specify dns_server
+    ("-d", "--dns-server"): {
+        "dest": "dns_server",
+        "default": DEFAULT_DNS_SERVER,
+        "help": "Specify DNS server address (default 127.0.0.1).",
+    },
+    # specify connections number
+    ("-c", "--conn_number"): {
+        "dest": "conn_number",
+        "type": int,
+        "default": CONN,
+        "help": "Specify asynchronous connection number (default 128).",
+    },
+    # format type
+    ("-f", "--format"): {
+        "dest": "format_type",
+        "default": "text",
+        "help": "Specify in what format output should be printed.\n"
+        "Allowed formats: text(default), json",
+    },
+}
 
 #################################################################
 
@@ -76,7 +100,7 @@ async def get_domains() -> set[str]:
 
 async def ask(
     resolver: dns.asyncresolver.Resolver, domain: str
-) -> tuple[str, bool]:
+) -> tuple[str, bool, float]:
     """
     The function try resolve fqdn.
 
@@ -85,31 +109,36 @@ async def ask(
     :return: FQDN and the value of bool or a returned IP address is correct.
     :rtype: tuple[str, bool]
     """
-
+    req_t0: float = time.perf_counter()
     try:
         ans: dns.resolver.Answer = await resolver.resolve(
-            domain, "A", lifetime=TIMEOUT, tcp=False
+            domain, "A", lifetime=DNS_TIMEOUT, tcp=False
         )
-        return domain, [cast(A, r).address for r in ans] == [SINK_IP]
+        req_dt0: float = time.perf_counter() - req_t0
+        ok: bool = [cast(A, r).address for r in ans] == [SINK_IP]
+        return domain, ok, req_dt0
     except Exception:
-        return domain, False
+        req_dt0: float = time.perf_counter() - req_t0
+        return domain, False, req_dt0
 
 
-async def main() -> None:
+async def main(args: tuple[Any, ...]) -> None:
     """
     The main function that runs the script.
 
+    :param tuple[Any, ...] args: all arguments.
     :return: None
     :rtype: None
     """
+    dns_server, conn_number, format_type = args
 
     domains: set[str] = await get_domains()
     res: dns.asyncresolver.Resolver = dns.asyncresolver.Resolver(
         configure=False
     )
-    res.nameservers = [DNS_SERVER]
+    res.nameservers = [dns_server]
 
-    sem: asyncio.Semaphore = asyncio.Semaphore(CONC)
+    sem: asyncio.Semaphore = asyncio.Semaphore(conn_number)
 
     async def worker(domain):
         """The function for limit connections."""
@@ -118,19 +147,59 @@ async def main() -> None:
 
     tasks = [asyncio.create_task(worker(d)) for d in domains]
 
-    bad = []
-    t0 = time.time()
+    bad: list[str] = []
+    req_counter: int = 0
+    req_timer: float = 0.0
+
+    t0: float = time.perf_counter()
     for fut in asyncio.as_completed(tasks):
-        name, ok = await fut
+        name, ok, req_dt = await fut
+        req_counter += 1
+        req_timer += req_dt
         if not ok:
             bad.append(name)
-    dt = time.time() - t0
+    dt_total: float = time.perf_counter() - t0
 
-    if bad:
-        print("Errors:", *bad[:20], "...", file=sys.stderr)
-    print(f"OK={len(domains)-len(bad)}  BAD={len(bad)}  ({dt:.1f}s)")
+    avg_ms = (req_timer / req_counter * 1000.0) if req_counter else 0.0
+
+    if format_type == "text":
+        if bad:
+            print("Errors:", *bad[:20], "...", file=sys.stderr)
+        print(
+            f"DNS={dns_server}  OK={len(domains)-len(bad)}  BAD={len(bad)}  "
+            f"TIME: AVG_RES={avg_ms:.1f}ms TOTAL={dt_total:.1f}s"
+        )
+    if format_type == "json":
+        output: dict[str, Any] = {
+            "DNS": dns_server,
+            "OK": len(domains) - len(bad),
+            "BAD": len(bad),
+            "TIME": {"AVG_RES": f"{avg_ms:.1f}", "TOTAL": f"{dt_total:.1f}"},
+            "ERRORS": bad,
+        }
+        print(json.dumps(output))
+
     sys.exit(1 if bad else 0)
 
 
+def get_parser() -> tuple[str | int, ...]:
+    """
+    The function return parser object.
+    :return: argmuent parser object.
+    :rtype: argparse.ArgumentParser
+    """
+
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+        description="The script checks the correctness of answers for "
+        " gambling domains made available on the journal hazard.mf.gov.pl"
+    )
+    for flags, params in ARGUMENTS.items():
+        parser.add_argument(*flags, **params)
+    args = parser.parse_args()
+
+    return args.dns_server, args.conn_number, args.format_type
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    args: tuple[Any, ...] = get_parser()
+    asyncio.run(main(*args))
