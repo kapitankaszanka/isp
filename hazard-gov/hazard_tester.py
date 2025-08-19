@@ -41,14 +41,15 @@ from dns.rdtypes.IN.A import A
 URL: str = "https://hazard.mf.gov.pl/api/Register"
 DEFAULT_DNS_SERVER: str = "127.0.0.1"
 SINK_IP: str = "145.237.235.240"
-CONN: int = 128  # connections number
+CONN: int = 64  # connections number
 DNS_TIMEOUT: float | int = 5.0  # dns timeout
 
 ARGUMENTS: dict[tuple[str, ...], dict[str, Any]] = {
     ("-d", "--dns-server"): {
         "dest": "dns_server",
+        "nargs": "+",
         "default": DEFAULT_DNS_SERVER,
-        "help": "Specify DNS server address (default 127.0.0.1).",
+        "help": "Specify one or more DNS server addresses (default 127.0.0.1).",
     },
     ("-c", "--conn_number"): {
         "dest": "conn_number",
@@ -122,7 +123,9 @@ async def ask(
         return domain, False, req_dt0
 
 
-async def main(dns_server: str, conn_number: int, format_type: str) -> None:
+async def main(
+    dns_server: list[str], conn_number: int, format_type: str
+) -> None:
     """
     The main function that runs the script.
 
@@ -135,7 +138,7 @@ async def main(dns_server: str, conn_number: int, format_type: str) -> None:
     res: dns.asyncresolver.Resolver = dns.asyncresolver.Resolver(
         configure=False
     )
-    res.nameservers = [dns_server]
+    res.nameservers = dns_server
 
     sem: asyncio.Semaphore = asyncio.Semaphore(conn_number)
 
