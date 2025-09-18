@@ -61,13 +61,10 @@ def fetch_xml(
     :rtype: list[dict[str, str]]
     """
 
-    headers: dict[str, str] = {"Accept": "application/xml"}
     with requests.Session() as s:
         logging.debug("Trying download domain list.")
         try:
-            _response: requests.Response = s.get(
-                url, timeout=timeout, headers=headers
-            )
+            _response: requests.Response = s.get(url, timeout=timeout)
             _response.raise_for_status()
             logging.debug("Parsing the downloaded domain list.")
             parsed: Any = xmltodict.parse(_response.content)
@@ -80,12 +77,16 @@ def fetch_xml(
             raise
 
 
-def make_domain_set(domain_list: list[dict[str, str]]) -> set[str]:
+def make_domain_set(
+    domain_list: list[dict[str, str]], domain_key: str = "AdresDomeny"
+) -> set[str]:
     """
     The function pulls out all domains from the parsd dictionary.
 
-    :params list[dict[str,str]] domain_list: parsed dictionary
-    :return: all domains
+    :params list[dict[str,str]] domain_list: parsed dictionary.
+    :params str domain_key: key name from domain_list, from which
+                            the domain will be pulled out.
+    :return: all domains.
     :rtype: set[str]
     """
 
@@ -93,7 +94,7 @@ def make_domain_set(domain_list: list[dict[str, str]]) -> set[str]:
     logging.debug("Creating domains set from downloaded list.")
     logging.debug("Checking idna standard.")
     for entry in domain_list:
-        raw: str = entry["AdresDomeny"].lower()
+        raw: str = entry[domain_key].lower()
         try:
             out.add(idna.encode(raw).decode())
         except idna.IDNAError:
@@ -163,10 +164,10 @@ def compare_zones(zone_path: Path, new_zone_obj: str) -> bool:
         logging.warning("Can't compare zones. Zone file will be overwriten.")
         return True
     logging.debug("Comparing zones.")
-    result: bool = (
-        hashlib.sha1(zone_data.encode()).digest()
-        != hashlib.sha1(new_zone_data.encode()).digest()
-    )
+    old_file_hash: bytes = hashlib.sha1(zone_data.encode()).digest()
+    new_file_hash: bytes = hashlib.sha1(new_zone_data.encode()).digest()
+    result: bool = old_file_hash != new_file_hash
+
     return result
 
 
