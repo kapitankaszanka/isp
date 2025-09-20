@@ -23,18 +23,17 @@
 #  DEALINGS IN THE SOFTWARE.
 # ---------------------------------------------------------------------------
 
-import sys
 import hashlib
 import logging
 import subprocess
-import idna
-import xmltodict
+import sys
 import time
-import requests
 from pathlib import Path
-
 from typing import Any
 
+import idna
+import requests
+import xmltodict
 
 #################################################################
 
@@ -153,7 +152,7 @@ def compare_zones(zone_path: Path, new_zone_obj: str) -> bool:
     :rtype: bool
     """
 
-    logging.debug(f"Loading current zone file.")
+    logging.debug("Loading current zone file.")
     zone_file: str = zone_path.read_text() if zone_path.exists() else ""
     split_string: str = "; --- BEGIN DATA ---"
     try:
@@ -185,11 +184,9 @@ def write_if_changed(zone_path: Path, zone_content: str) -> bool:
     logging.debug("Starting compare zones.")
     changed: bool = compare_zones(zone_path, zone_content)
     if changed:
-        logging.debug(f"Changes in zone detected. Overwriting zone file.")
+        logging.debug("Changes in zone detected. Overwriting zone file.")
         zone_path.write_text(zone_content)
-        logging.info(
-            f"File {zone_path} was updated ({len(zone_content) // 1024}kB)."
-        )
+        logging.info(f"File {zone_path} was updated ({len(zone_content) // 1024}kB).")
         return True
     else:
         logging.info("No changes to the file.")
@@ -210,11 +207,11 @@ def main() -> int:
         domains: set[str] = make_domain_set(domains_list)
         zone_txt: str = render_zone_file(domains, SINK_IP, TTL)
         if write_if_changed(Path(ZONE_PATH), zone_txt):
-            logging.debug(f"Reloading the zone file.")
+            logging.debug("Reloading the zone file.")
             subprocess.run(RNDC_CMD, check=True, stdout=subprocess.DEVNULL)
-            logging.info(f"The launch of the script was successful")
+            logging.info("The launch of the script was successful")
         else:
-            logging.info(f"The launch of the script was successful")
+            logging.info("The launch of the script was successful")
         return 0
     except Exception as e:
         logging.critical(f"Fatal error ocure: {e}")
