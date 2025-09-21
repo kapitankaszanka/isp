@@ -139,7 +139,7 @@ async def main(dns_server: list[str], conn_number: int, format_type: str) -> Non
 
     sem: asyncio.Semaphore = asyncio.Semaphore(conn_number)
 
-    async def worker(domain):
+    async def worker(domain: str):
         """The function for limit connections."""
         async with sem:
             return await ask(res, domain)
