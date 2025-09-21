@@ -23,17 +23,18 @@
 #  DEALINGS IN THE SOFTWARE.
 # ---------------------------------------------------------------------------
 
+import argparse
+import asyncio
+import json
 import sys
 import time
-import json
-import asyncio
-import idna
-import xmltodict
-import requests
-import argparse
-import dns.resolver
-import dns.asyncresolver
 from typing import Any, cast
+
+import dns.asyncresolver
+import dns.resolver
+import idna
+import requests
+import xmltodict
 from dns.rdtypes.IN.A import A
 
 #################################################################
@@ -80,9 +81,9 @@ async def get_domains() -> set[str]:
         with requests.Session() as s:
             response: requests.Response = s.get(URL, timeout=(5, 60))
             response.raise_for_status()
-            xml: list[dict[str, str]] = xmltodict.parse(response.text)[
-                "Rejestr"
-            ]["PozycjaRejestru"]
+            xml: list[dict[str, str]] = xmltodict.parse(response.text)["Rejestr"][
+                "PozycjaRejestru"
+            ]
     except requests.exceptions.RequestException as e:
         print(f"Request error: {e}")
         sys.exit(1)
@@ -119,13 +120,11 @@ async def ask(
         ok: bool = [cast(A, r).address for r in ans] == [SINK_IP]
         return domain, ok, req_dt0
     except Exception:
-        req_dt0: float = time.perf_counter() - req_t0
-        return domain, False, req_dt0
+        req_dt0_err: float = time.perf_counter() - req_t0
+        return domain, False, req_dt0_err
 
 
-async def main(
-    dns_server: list[str], conn_number: int, format_type: str
-) -> None:
+async def main(dns_server: list[str], conn_number: int, format_type: str) -> None:
     """
     The main function that runs the script.
 
@@ -135,9 +134,7 @@ async def main(
     """
 
     domains: set[str] = await get_domains()
-    res: dns.asyncresolver.Resolver = dns.asyncresolver.Resolver(
-        configure=False
-    )
+    res: dns.asyncresolver.Resolver = dns.asyncresolver.Resolver(configure=False)
     res.nameservers = dns_server
 
     sem: asyncio.Semaphore = asyncio.Semaphore(conn_number)
