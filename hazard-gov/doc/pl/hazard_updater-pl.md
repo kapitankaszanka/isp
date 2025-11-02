@@ -68,9 +68,6 @@ NoNewPrivileges=yes
 ProtectHome=yes
 ProtectSystem=full
 ReadWritePaths=/etc/bind
-
-[Install]
-WantedBy=multi-user.target
 ```
 Konfiguracja timera, uruchamia skrypt co 30min z losowym opóźnieniem do 15min.
 ```ini
