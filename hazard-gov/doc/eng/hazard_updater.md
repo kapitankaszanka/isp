@@ -68,9 +68,6 @@ NoNewPrivileges=yes
 ProtectHome=yes
 ProtectSystem=full
 ReadWritePaths=/etc/bind
-
-[Install]
-WantedBy=multi-user.target
 ```
 And timer configuration
 ```ini
