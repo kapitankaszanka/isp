@@ -10,14 +10,12 @@ Output can be formatted as plain text (default) or JSON.
 
 ## Quick start
 
-### 1. Download the script, install Python requirements
+### 1. Download the script and install Python requirements with uv
 
 ```bash
 git clone https://github.com/kapitankaszanka/isp.git
 cd isp/hazard-gov
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 2. Run the script

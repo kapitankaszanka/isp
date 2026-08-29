@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 # ---------------------------------------------------------------------------
-#  hazard_updater.py
+# hazard_updater.py
 #
-#  Copyright (c) 2025 Mateusz Krupczyński
+# Copyright (c) 2025 Mateusz Krupczyński
 #
-#  Permission is hereby granted, free of charge, to any person obtaining a
-#  copy of this software and associated documentation files (the "Software"),
-#  to deal in the Software without restriction, including without limitation
-#  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-#  and/or sell copies of the Software, and to permit persons to whom the
-#  Software is furnished to do so, subject to the following conditions:
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
 #
-#  The above copyright notice and this permission notice shall be included in
-#  all copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 #
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-#  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-#  DEALINGS IN THE SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
 # ---------------------------------------------------------------------------
 
 import hashlib
@@ -46,9 +46,11 @@ RNDC_CMD: list[str] = ["rndc", "reload", "hazard-rpz"]
 
 #################################################################
 
+logger = logging.getLogger(__name__)
+
 
 def fetch_xml(
-    url: str, timeout: float | int | tuple[int, int] = (5, 60)
+    url: str, timeout: float | tuple[int, int] = (5, 60)
 ) -> list[dict[str, Any]]:
     """
     The function download records and return parsed dict.
@@ -61,18 +63,18 @@ def fetch_xml(
     """
 
     with requests.Session() as s:
-        logging.debug("Trying download domain list.")
+        logger.debug("Trying download domain list.")
         try:
             _response: requests.Response = s.get(url, timeout=timeout)
             _response.raise_for_status()
-            logging.debug("Parsing the downloaded domain list.")
+            logger.debug("Parsing the downloaded domain list.")
             parsed: Any = xmltodict.parse(_response.content)
             return parsed["Rejestr"]["PozycjaRejestru"]
         except requests.exceptions.RequestException as e:
-            logging.error(f"Request error: {e}")
+            logger.error(f"Request error: {e}")
             raise
         except Exception as e:
-            logging.error(f"Error occurred when parsing XML file: {e}")
+            logger.error(f"Error occurred when parsing XML file: {e}")
             raise
 
 
@@ -90,8 +92,8 @@ def make_domain_set(
     """
 
     out: set[str] = set()
-    logging.debug("Creating domains set from downloaded list.")
-    logging.debug("Checking idna standard.")
+    logger.debug("Creating domains set from downloaded list.")
+    logger.debug("Checking idna standard.")
     for entry in domain_list:
         raw: str = entry[domain_key].lower()
         try:
@@ -99,7 +101,7 @@ def make_domain_set(
         except idna.IDNAError:
             if all(c.isalnum() or c in "-._" for c in raw):
                 out.add(raw)
-    logging.info(f"Active domains in register: {len(out)}")
+    logger.info(f"Active domains in register: {len(out)}")
     return out
 
 
@@ -112,14 +114,14 @@ def render_zone_file(domains: set[str], sink_ip: str, zone_ttl: int) -> str:
     the change is also required in compare_zones() function.
 
     :param set[str] domains: set with all domains that will be addred to
-                              zone file.
+                             zone file.
     :param str sink_ip: ip with bind will response.
     :param int zone_ttl: ttl for entry in zone.
     :return: multiline string object.
     :rtype: str
     """
 
-    logging.debug("Creating zone file string object.")
+    logger.debug("Creating zone file string object.")
     serial: int = int(time.time())
     head: str = f"""$TTL {zone_ttl}
 @ SOA localhost. root.localhost. ( 
@@ -152,17 +154,17 @@ def compare_zones(zone_path: Path, new_zone_obj: str) -> bool:
     :rtype: bool
     """
 
-    logging.debug("Loading current zone file.")
+    logger.debug("Loading current zone file.")
     zone_file: str = zone_path.read_text() if zone_path.exists() else ""
     split_string: str = "; --- BEGIN DATA ---"
     try:
         zone_data: str = zone_file.split(split_string)[1]
         new_zone_data: str = new_zone_obj.split(split_string)[1]
-    except Exception as e:
-        logging.warning(f"Error ocurred when comparing files: {e}")
-        logging.warning("Can't compare zones. Zone file will be overwriten.")
+    except IndexError as e:
+        logger.warning(f"Error ocurred when comparing files: {e}")
+        logger.warning("Can't compare zones. Zone file will be overwriten.")
         return True
-    logging.debug("Comparing zones.")
+    logger.debug("Comparing zones.")
     old_file_hash: bytes = hashlib.sha1(zone_data.encode()).digest()
     new_file_hash: bytes = hashlib.sha1(new_zone_data.encode()).digest()
     result: bool = old_file_hash != new_file_hash
@@ -181,15 +183,15 @@ def write_if_changed(zone_path: Path, zone_content: str) -> bool:
     :rtype: bool
     """
 
-    logging.debug("Starting compare zones.")
+    logger.debug("Starting compare zones.")
     changed: bool = compare_zones(zone_path, zone_content)
     if changed:
-        logging.debug("Changes in zone detected. Overwriting zone file.")
+        logger.debug("Changes in zone detected. Overwriting zone file.")
         zone_path.write_text(zone_content)
-        logging.info(f"File {zone_path} was updated ({len(zone_content) // 1024}kB).")
+        logger.info(f"File {zone_path} was updated ({len(zone_content) // 1024}kB).")
         return True
     else:
-        logging.info("No changes to the file.")
+        logger.info("No changes to the file.")
         return False
 
 
@@ -201,20 +203,20 @@ def main() -> int:
     :rtype: int
     """
 
-    logging.info("Executing script.")
+    logger.info("Executing script.")
     try:
         domains_list: list[dict[str, Any]] = fetch_xml(URL_REGISTER)
         domains: set[str] = make_domain_set(domains_list)
         zone_txt: str = render_zone_file(domains, SINK_IP, TTL)
         if write_if_changed(Path(ZONE_PATH), zone_txt):
-            logging.debug("Reloading the zone file.")
+            logger.debug("Reloading the zone file.")
             subprocess.run(RNDC_CMD, check=True, stdout=subprocess.DEVNULL)
-            logging.info("The launch of the script was successful")
+            logger.info("The launch of the script was successful")
         else:
-            logging.info("The launch of the script was successful")
+            logger.info("The launch of the script was successful")
         return 0
-    except Exception as e:
-        logging.critical(f"Fatal error ocure: {e}")
+    except Exception as e:  # noqa: BLE001
+        logger.critical(f"Fatal error ocure: {e}")
         return 1
 
 

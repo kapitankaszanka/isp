@@ -31,6 +31,7 @@ import time
 from typing import Any, cast
 
 import dns.asyncresolver
+import dns.exception
 import dns.resolver
 import idna
 import requests
@@ -119,7 +120,7 @@ async def ask(
         req_dt0: float = time.perf_counter() - req_t0
         ok: bool = [cast(A, r).address for r in ans] == [SINK_IP]
         return domain, ok, req_dt0
-    except Exception:
+    except (dns.exception.DNSException, OSError):
         req_dt0_err: float = time.perf_counter() - req_t0
         return domain, False, req_dt0_err
 
@@ -165,7 +166,7 @@ async def main(dns_server: list[str], conn_number: int, format_type: str) -> Non
         if bad:
             print("Errors:", *bad[:20], "...", file=sys.stderr)
         print(
-            f"DNS={dns_server}  OK={len(domains)-len(bad)}  BAD={len(bad)}  "
+            f"DNS={dns_server}  OK={len(domains) - len(bad)}  BAD={len(bad)}  "
             f"TIMERS: AVG_RES={avg_ms:.1f}ms TOTAL={dt_total:.1f}s"
         )
     if format_type == "json":

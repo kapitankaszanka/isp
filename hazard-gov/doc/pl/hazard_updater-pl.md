@@ -6,14 +6,11 @@
 
 ## Szybki start
 
-### 1. Pobranie skryptu, instalacja zależności python.
+### 1. Pobranie skryptu i instalacja zależności za pomocą uv
 ```bash
 git clone https://github.com/kapitankaszanka/isp.git
 cd isp/hazard-gov
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-deactivate
+uv sync
 ```
 
 ### 2. Konfiguracja server BIND.

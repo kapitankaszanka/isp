@@ -10,14 +10,12 @@ Wyniki mogą być wyświetlane w formacie tekstowym (domyślnie) lub JSON.
 
 ## Szybki start
 
-### 1. Pobranie skryptu i instalacja zależności
+### 1. Pobranie skryptu i instalacja zależności za pomocą uv
 
 ```bash
 git clone https://github.com/kapitankaszanka/isp.git
 cd isp/hazard-gov
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 2. Uruchamianie skryptu

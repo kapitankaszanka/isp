@@ -1,0 +1,24 @@
+[project]
+name = "hazard-gov"
+version = "0.1.1"
+description = "Scripts to check and update DNS records for Polish hazard register domains"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "certifi==2025.8.3",
+    "charset-normalizer==3.4.3",
+    "dnspython==2.7.0",
+    "idna==3.10",
+    "requests==2.32.4",
+    "urllib3==2.5.0",
+    "xmltodict==0.14.2",
+]
+
+[dependency-groups]
+dev = [
+    "pyright",
+    "ruff",
+]
+
+[tool.uv]
+managed = true

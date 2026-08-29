@@ -7,15 +7,12 @@ Every domain in that list is redirected to **145 .237 .235 .240**.
 
 ## Quick start
 
-### 1. Download the script, install python requierments.
+### 1. Download the script and install Python requirements with uv.
 
 ```bash
 git clone https://github.com/kapitankaszanka/isp.git
 cd isp/hazard-gov
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-deactivate
+uv sync
 ```
 
 ### 2. Bind configuration.
